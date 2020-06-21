@@ -1,5 +1,6 @@
 package com.kharismarizqii.youtubevideo.activity
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -7,7 +8,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.NestedScrollView
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.kharismarizqii.youtubevideo.R
 import com.kharismarizqii.youtubevideo.YoutubeApi
@@ -26,9 +26,7 @@ class PlaylistActivity : AppCompatActivity(), SwipeRefreshLayout.OnRefreshListen
     private lateinit var list: ArrayList<PlaylistItem>
     private lateinit var adapter: PlaylistAdapter
     private var nextPage = ""
-    var page = 1
     var isLoading = false
-    var limit = 5
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,7 +38,7 @@ class PlaylistActivity : AppCompatActivity(), SwipeRefreshLayout.OnRefreshListen
         rvPlaylist.layoutManager = linearLayout
         adapter = PlaylistAdapter()
         rvPlaylist.adapter = adapter
-        doApiCall(null)
+        doApiCall(null, false)
         nestedScrollView.setOnScrollChangeListener(object : NestedScrollView.OnScrollChangeListener{
             override fun onScrollChange(
                 v: NestedScrollView?,
@@ -55,33 +53,18 @@ class PlaylistActivity : AppCompatActivity(), SwipeRefreshLayout.OnRefreshListen
                     val total = adapter.itemCount
                     if (!isLoading && !nextPage.isNullOrEmpty() ){
                         if (visibleItemCount + pastVisibleItem >= total){
-                            doApiCall(nextPage)
+                            doApiCall(nextPage, false)
                         }
                     }
                 }
             }
         })
-//        rvPlaylist.addOnScrollListener(object : RecyclerView.OnScrollListener(){
-//            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-//                if (dy>0){
-//                    val visibleItemCount = linearLayout.childCount
-//                    val pastVisibleItem = linearLayout.findFirstVisibleItemPosition()
-//                    val total = adapter.itemCount
-//
-//                    if (!isLoading ){
-//                        if (visibleItemCount + pastVisibleItem >= total){
-//                            doApiCall(nextPage)
-//                        }
-//                    }
-//                }
-//            }
-//        })
     }
 
-    private fun doApiCall(page: String?) {
+    private fun doApiCall(page: String?, isOnRefresh: Boolean) {
         isLoading = true
         Log.d(TAG, "doApiCall : page $page")
-        progressBar.visibility = View.VISIBLE
+        if (!isOnRefresh) progressBar.visibility = View.VISIBLE
         val parameters = HashMap<String, String>()
         parameters["channelId"] = YoutubeApi.CHANNEL_ID
         parameters["key"] = YoutubeApi.API_KEY
@@ -107,6 +90,21 @@ class PlaylistActivity : AppCompatActivity(), SwipeRefreshLayout.OnRefreshListen
                 progressBar.visibility = View.GONE
                 isLoading = false
                 swipeRefresh.isRefreshing = false
+                showSelectedPlaylist()
+            }
+        })
+    }
+
+    private fun showSelectedPlaylist() {
+        adapter.setOnItemClickCallback(object : PlaylistAdapter.OnItemClickCallback{
+            override fun onItemClicked(data: PlaylistItem) {
+                Intent(this@PlaylistActivity, VideosActivity::class.java).also {
+                    it.putExtra(VideosActivity.EXTRA_ID, data.id)
+                    it.putExtra(VideosActivity.EXTRA_TITLE, data.snippet.title)
+                    it.putExtra(VideosActivity.EXTRA_DESCRIPTION, data.snippet.description)
+                    it.putExtra(VideosActivity.EXTRA_PUBLISH, data.snippet.publishedAt)
+                    startActivity(it)
+                }
             }
         })
     }
@@ -114,6 +112,6 @@ class PlaylistActivity : AppCompatActivity(), SwipeRefreshLayout.OnRefreshListen
     override fun onRefresh() {
         adapter.clear();
         list.clear()
-        doApiCall(null);
+        doApiCall(null, true);
     }
 }

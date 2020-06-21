@@ -1,51 +1,48 @@
 package com.kharismarizqii.youtubevideo.adapter
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.kharismarizqii.youtubevideo.R
 import com.kharismarizqii.youtubevideo.model.playlist.PlaylistItem
+import com.kharismarizqii.youtubevideo.model.videos.VideosItem
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.item_playlist.view.*
 
+class VideosAdapter: RecyclerView.Adapter<VideosAdapter.VideosViewHolder>(){
 
-class PlaylistAdapter: RecyclerView.Adapter<PlaylistAdapter.PlaylistViewHolder>(){
-
-    private var list =  ArrayList<PlaylistItem>()
+    private var list = ArrayList<VideosItem>()
 
     private var onItemClickCallback: OnItemClickCallback? = null
     fun setOnItemClickCallback(onItemClickCallback: OnItemClickCallback) {
         this.onItemClickCallback = onItemClickCallback
     }
 
-    inner class PlaylistViewHolder(itemView: View): RecyclerView.ViewHolder(itemView){
-        fun bind(item: PlaylistItem){
+    inner class VideosViewHolder(itemView: View): RecyclerView.ViewHolder(itemView){
+        fun bind(item: VideosItem){
             with(itemView){
-                Picasso.get().load(item.snippet.thumbnails.high.url).fit().centerCrop().into(ivThumbPlaylist)
                 tvTitle.text = item.snippet.title
                 tvDesc.text = item.snippet.description
+                Picasso.get().load(item.snippet.thumbnails.high.url).fit().centerCrop().into(ivThumbPlaylist)
 
                 itemView.setOnClickListener { onItemClickCallback?.onItemClicked(item) }
             }
         }
-
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaylistViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VideosViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_playlist, parent, false)
-        return PlaylistViewHolder(view)
+        return VideosViewHolder(view)
     }
 
     override fun getItemCount(): Int = list.size
 
-    override fun onBindViewHolder(holder: PlaylistViewHolder, position: Int) {
-        Log.d("Adapter", "onCreate: doApiCall: item ${position}")
+    override fun onBindViewHolder(holder: VideosViewHolder, position: Int) {
         holder.bind(list[position])
     }
 
-    fun addList(items: ArrayList<PlaylistItem>){
+    fun addList(items: ArrayList<VideosItem>){
         list.addAll(items)
         notifyDataSetChanged()
     }
@@ -56,8 +53,6 @@ class PlaylistAdapter: RecyclerView.Adapter<PlaylistAdapter.PlaylistViewHolder>(
     }
 
     interface OnItemClickCallback {
-        fun onItemClicked(data: PlaylistItem)
+        fun onItemClicked(data: VideosItem)
     }
-
-
 }
