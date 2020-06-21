@@ -1,9 +1,11 @@
 package com.kharismarizqii.youtubevideo.activity
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.NestedScrollView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -33,20 +35,25 @@ class PlaylistActivity : AppCompatActivity(), SwipeRefreshLayout.OnRefreshListen
         setContentView(R.layout.activity_playlist)
         list = ArrayList()
         val linearLayout = LinearLayoutManager(this)
+        swipeRefresh.setOnRefreshListener(this)
         rvPlaylist.setHasFixedSize(true)
         rvPlaylist.layoutManager = linearLayout
         adapter = PlaylistAdapter()
         rvPlaylist.adapter = adapter
         doApiCall(null)
-
-        rvPlaylist.addOnScrollListener(object : RecyclerView.OnScrollListener(){
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                if (dy>0){
+        nestedScrollView.setOnScrollChangeListener(object : NestedScrollView.OnScrollChangeListener{
+            override fun onScrollChange(
+                v: NestedScrollView?,
+                scrollX: Int,
+                scrollY: Int,
+                oldScrollX: Int,
+                oldScrollY: Int
+            ) {
+                if (scrollY>0){
                     val visibleItemCount = linearLayout.childCount
                     val pastVisibleItem = linearLayout.findFirstVisibleItemPosition()
                     val total = adapter.itemCount
-
-                    if (!isLoading ){
+                    if (!isLoading && !nextPage.isNullOrEmpty() ){
                         if (visibleItemCount + pastVisibleItem >= total){
                             doApiCall(nextPage)
                         }
@@ -54,10 +61,26 @@ class PlaylistActivity : AppCompatActivity(), SwipeRefreshLayout.OnRefreshListen
                 }
             }
         })
+//        rvPlaylist.addOnScrollListener(object : RecyclerView.OnScrollListener(){
+//            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+//                if (dy>0){
+//                    val visibleItemCount = linearLayout.childCount
+//                    val pastVisibleItem = linearLayout.findFirstVisibleItemPosition()
+//                    val total = adapter.itemCount
+//
+//                    if (!isLoading ){
+//                        if (visibleItemCount + pastVisibleItem >= total){
+//                            doApiCall(nextPage)
+//                        }
+//                    }
+//                }
+//            }
+//        })
     }
 
     private fun doApiCall(page: String?) {
         isLoading = true
+        Log.d(TAG, "doApiCall : page $page")
         progressBar.visibility = View.VISIBLE
         val parameters = HashMap<String, String>()
         parameters["channelId"] = YoutubeApi.CHANNEL_ID
@@ -83,16 +106,14 @@ class PlaylistActivity : AppCompatActivity(), SwipeRefreshLayout.OnRefreshListen
                 }
                 progressBar.visibility = View.GONE
                 isLoading = false
+                swipeRefresh.isRefreshing = false
             }
         })
     }
 
     override fun onRefresh() {
-//        itemCount = 0;
-//        currentPage = PAGE_START;
-//        isLastPage = false;
-//        adapter.clear();
-//        list.clear()
-//        doApiCall(null);
+        adapter.clear();
+        list.clear()
+        doApiCall(null);
     }
 }
